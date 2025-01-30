@@ -14,7 +14,6 @@ import { redirect } from "next/navigation";
 
 export default async function LoginForm() {
   const session = await auth();
-  // console.log("session", session);
 
   if (session?.user) {
     return redirect("/");
@@ -34,7 +33,7 @@ export default async function LoginForm() {
               action={async () => {
                 "use server";
                 await signIn("github", {
-                  redirectTo: "/",
+                  redirectTo: "/onboarding",
                 });
               }}
             >
@@ -49,7 +48,7 @@ export default async function LoginForm() {
               action={async () => {
                 "use server";
                 await signIn("google", {
-                  redirectTo: "/",
+                  redirectTo: "/onboarding",
                 });
               }}
             >
