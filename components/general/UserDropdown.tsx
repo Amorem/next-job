@@ -1,6 +1,11 @@
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { ChevronDownIcon, HeartIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  HeartIcon,
+  Layers2Icon,
+  LogOutIcon,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,27 +16,30 @@ import {
   DropdownMenuSeparator,
 } from "../ui/dropdown-menu";
 import Link from "next/link";
+import { signOut } from "@/lib/auth";
 
-export function UserDropDown() {
+interface iAppProps {
+  email: string;
+  name: string;
+  image: string;
+}
+
+export function UserDropDown({ email, name, image }: iAppProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant={"ghost"} className="h-auto p-0 hover:bg-transparent">
           <Avatar>
-            <AvatarImage src="" alt="profile image" />
-            <AvatarFallback>CT</AvatarFallback>
+            <AvatarImage src={image} alt="profile image" />
+            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
           </Avatar>
           <ChevronDownIcon size={16} strokeWidth={2} className="opacity-60" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48" align="end">
         <DropdownMenuLabel className="flex flex-col">
-          <span className="text-sm font-medium text-foreground">
-            Cedric TOURNIER
-          </span>
-          <span className="text-xs text-muted-forreground">
-            cedric@amorem.com
-          </span>
+          <span className="text-sm font-medium text-foreground">{name}</span>
+          <span className="text-xs text-muted-forreground">{email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
@@ -44,11 +52,25 @@ export function UserDropDown() {
 
           <DropdownMenuItem asChild>
             <Link href="/my-jobs">
-              <HeartIcon size={16} strokeWidth={2} className="opacity-60" />
-              <span>My job listing</span>
+              <Layers2Icon size={16} strokeWidth={2} className="opacity-60" />
+              <span>My Job Listing</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/" });
+            }}
+          >
+            <button className="flex w-full items-center gap-2">
+              <LogOutIcon size={16} strokeWidth={2} className="opacity-60" />
+              <span>Log Out</span>
+            </button>
+          </form>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

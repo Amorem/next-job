@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Logo from "@/public/logo.png";
 import Image from "next/image";
-import { Button, buttonVariants } from "../ui/button";
+import { buttonVariants } from "../ui/button";
 import { ThemeToggle } from "./ThemeToggle";
-import { auth, signIn, signOut } from "@/lib/auth";
+import { auth } from "@/lib/auth";
 import { UserDropDown } from "./UserDropdown";
 
 export async function NavBar() {
@@ -23,12 +23,18 @@ export async function NavBar() {
           Post Job
         </Link>
         {session?.user ? (
-          <UserDropDown />
+          <UserDropDown
+            name={session.user.name as string}
+            email={session.user.email as string}
+            image={session.user.image as string}
+          />
         ) : (
           <Link
             href="/login"
             className={buttonVariants({ variant: "outline", size: "lg" })}
-          ></Link>
+          >
+            Login
+          </Link>
         )}
       </div>
     </nav>
