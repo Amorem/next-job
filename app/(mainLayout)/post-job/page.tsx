@@ -1,4 +1,4 @@
-import { companies, stats, testimonials } from "@/app/constants";
+import { companies, stats, testimonials } from "@/constants";
 import { CreateJobForm } from "@/components/forms/CreateJobForm";
 import {
   Card,
