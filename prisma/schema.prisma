@@ -19,6 +19,8 @@ model User {
   userType            UserType?
   onBoardingCompleted Boolean   @default(false)
 
+  stripeCustomerId String?
+
   Company   Company?
   JobSeeker JobSeeker?
 
