@@ -1,4 +1,4 @@
-import { benefits } from "@/constants";
+import { benefits } from "@/app/constants";
 import { Badge } from "../ui/badge";
 import { ControllerRenderProps } from "react-hook-form";
 

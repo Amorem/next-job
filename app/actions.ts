@@ -3,7 +3,7 @@
 import arcjet, { detectBot, shield } from "@/lib/arcjet";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/requireUser";
-import { companySchema, jobSeekerSchema } from "@/lib/zodSchemas";
+import { companySchema, jobSchema, jobSeekerSchema } from "@/lib/zodSchemas";
 import { request } from "@arcjet/next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -63,6 +63,45 @@ export async function createJobSeeker(data: z.infer<typeof jobSeekerSchema>) {
           ...validateData,
         },
       },
+    },
+  });
+  return redirect("/");
+}
+
+export async function createJob(data: z.infer<typeof jobSchema>) {
+  const user = await requireUser();
+  const req = await request();
+  const decision = await aj.protect(req);
+  if (decision.isDenied()) {
+    throw new Error("forbidden action");
+  }
+
+  const validateData = jobSchema.parse(data);
+
+  const company = await prisma.company.findUnique({
+    where: {
+      userId: user.id,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!company?.id) {
+    redirect("/");
+  }
+
+  const jobPost = await prisma.jobPost.create({
+    data: {
+      jobDescription: validateData.jobDescription,
+      jobTitle: validateData.jobTitle,
+      employmentType: validateData.jobDescription,
+      listingDuration: validateData.listingDuration,
+      location: validateData.location,
+      salaryFrom: validateData.salaryFrom,
+      salaryTo: validateData.salaryTo,
+      benefits: validateData.benefits,
+      companyId: company.id,
     },
   });
   return redirect("/");
