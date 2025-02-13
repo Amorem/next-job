@@ -3,10 +3,12 @@
 import arcjet, { detectBot, shield } from "@/lib/arcjet";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/requireUser";
+import { stripe } from "@/lib/stripe";
 import { companySchema, jobSchema, jobSeekerSchema } from "@/lib/zodSchemas";
 import { request } from "@arcjet/next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { jobListingDurationPricing } from "./constants";
 
 const aj = arcjet
   .withRule(
@@ -84,11 +86,36 @@ export async function createJob(data: z.infer<typeof jobSchema>) {
     },
     select: {
       id: true,
+      user: {
+        select: {
+          stripeCustomerId: true,
+        },
+      },
     },
   });
 
   if (!company?.id) {
     redirect("/");
+  }
+
+  let stripeCustomerId = company.user.stripeCustomerId;
+
+  if (!stripeCustomerId) {
+    const customer = await stripe.customers.create({
+      email: user.email as string,
+      name: user.name as string,
+    });
+
+    stripeCustomerId = customer.id;
+
+    await prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        stripeCustomerId,
+      },
+    });
   }
 
   const jobPost = await prisma.jobPost.create({
@@ -103,6 +130,44 @@ export async function createJob(data: z.infer<typeof jobSchema>) {
       benefits: validateData.benefits,
       companyId: company.id,
     },
+    select: {
+      id: true,
+    },
   });
-  return redirect("/");
+
+  const pricingTier = jobListingDurationPricing.find(
+    (tier) => tier.days === validateData.listingDuration
+  );
+
+  if (!pricingTier) {
+    throw new Error("Invalid listing duration selected");
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    customer: stripeCustomerId,
+    line_items: [
+      {
+        price_data: {
+          product_data: {
+            name: `Job Posting - ${pricingTier.days} Days`,
+            description: pricingTier.description,
+            images: [
+              "https://3sweqyhysq.ufs.sh/f/I2Wc7Fh3EmUuWgRrIlctdYzZakOHXSjEnf8bi2l5A1KpGgh0",
+            ],
+          },
+          currency: "USD",
+          unit_amount: pricingTier.price * 100,
+        },
+        quantity: 1,
+      },
+    ],
+    metadata: {
+      jobId: jobPost.id,
+    },
+    mode: "payment",
+    success_url: `${process.env.NEXT_PUBLIC_URL}/payment/success`,
+    cancel_url: `${process.env.NEXT_PUBLIC_URL}/payment/cancel`,
+  });
+
+  return redirect(session.url as string);
 }
